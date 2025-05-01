@@ -1,1 +1,3 @@
 *.sh            text eol=lf
+frontend/.streamlit/config.toml merge=ours
+.gitignore  merge=ours

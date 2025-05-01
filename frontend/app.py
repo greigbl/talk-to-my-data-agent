@@ -45,3 +45,8 @@ asyncio.run(
 
 pg = st.navigation(pages)
 pg.run()
+
+##AUTO-APPENDED
+import os
+st.sidebar.text_input("Please describe your role", help="Personalize your experience by letting the LLM know your role.", placeholder="I am the CFO of the company")
+st.sidebar.write(os.getenv("CURRENT_APP_VERSION"))

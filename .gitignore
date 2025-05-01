@@ -7,6 +7,9 @@ __pycache__/
 # C extensions
 *.so
 
+#Local customizations
+frontend/assets/*
+
 # Distribution / packaging
 .Python
 build/
@@ -181,3 +184,5 @@ e2e/downloads/
 .env*
 !.env.template
 node_modules/
+*.ttf
+*.otf
