@@ -14,9 +14,10 @@
 from __future__ import annotations
 
 import json
+import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any, Callable, Generator, Literal, Optional, TypedDict, Union
+from typing import Any, Callable, Generator, Literal, Optional, Union
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -41,6 +42,7 @@ from pydantic import (
     field_validator,
     model_validator,
 )
+from typing_extensions import TypedDict
 
 from .code_execution import MaxReflectionAttempts
 
@@ -239,6 +241,10 @@ class DataDictionary(BaseModel):
         )
 
 
+class DataDictionaryResponse(DataDictionary):
+    in_progress: bool = False
+
+
 class DictionaryGeneration(BaseModel):
     """Validates LLM responses for data dictionary generation
 
@@ -348,6 +354,23 @@ class AnalysisError(BaseModel):
                 if exception.exception_history is not None
                 else None
             ),
+        )
+
+    @classmethod
+    def from_value_error(
+        cls,
+        exception: ValueError,
+    ) -> "AnalysisError":
+        return AnalysisError(
+            exception_history=[
+                CodeExecutionError(
+                    exception_str=str(exception),
+                    traceback_str=None,
+                    code=None,
+                    stdout=str(exception),
+                    stderr=str(exception),
+                )
+            ],
         )
 
 
@@ -514,6 +537,8 @@ class AnalystChatMessage(BaseModel):
     components: list[Component]
     in_progress: bool = True
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    chat_id: str | None = None
 
     def to_openai_message_param(self) -> ChatCompletionMessageParam:
         if self.role == "user":
@@ -557,7 +582,6 @@ class ChatJSONEncoder(json.JSONEncoder):
 class ChatHistory(BaseModel):
     user_id: str
     chat_name: str
-    chat_messages: list[AnalystChatMessage]
     data_source: str
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -570,7 +594,7 @@ class ChatHistory(BaseModel):
 
 
 class FileUploadResponse(TypedDict, total=False):
-    filename: str
+    filename: Optional[str]
     content_type: Optional[str]
     size: Optional[int]
     dataset_name: Optional[str]
@@ -607,3 +631,8 @@ class ChatMessagePayload(BaseModel):
     enable_chart_generation: bool = True
     enable_business_insights: bool = True
     data_source: str = "file"
+
+
+class DownloadedRegistryDataset(BaseModel):
+    name: str = ""
+    error: Optional[str] = None
